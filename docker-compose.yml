@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: ifood_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - ifood_network  # ← ADICIONAR
+
+  celery_worker:
+    build: .
+    container_name: ifood_celery_worker
+    command: celery -A celery_app worker --loglevel=info --concurrency=2
+    volumes:
+      - .:/app
+      - ./uploads:/app/uploads
+      - ./data:/app/data
+      - ./config/lookups:/app/config/lookups
+      - ./config/google_drive_credentials.json:/app/config/google_drive_credentials.json:ro
+      - persistent_data:/app/data/inputs_persistentes
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - TZ=America/Sao_Paulo
+      - GOOGLE_DRIVE_FOLDER_ID=1870eoJP48o1qSu9TCiudksft_HKXe3nI
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - ifood_network  # ← ADICIONAR
+
+  celery_beat:
+    build: .
+    container_name: ifood_celery_beat
+    command: celery -A celery_app beat --loglevel=info
+    volumes:
+      - .:/app
+      - ./data:/app/data
+      - ./config:/app/config
+      - beat_data:/var/lib/celery
+      - persistent_data:/app/data/inputs_persistentes
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - TZ=America/Sao_Paulo
+      - GOOGLE_DRIVE_FOLDER_ID=1870eoJP48o1qSu9TCiudksft_HKXe3nI
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - ifood_network  # ← ADICIONAR
+
+  streamlit:
+    build: .
+    container_name: ifood_streamlit
+    command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0
+    ports:
+      - "8590:8501"
+    volumes:
+      - .:/app
+      - ./uploads:/app/uploads
+      - ./data:/app/data
+      - ./config:/app/config
+      - ./config/lookups:/app/config/lookups
+      - persistent_data:/app/data/inputs_persistentes
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+    depends_on:
+      - redis
+      - celery_worker
+      - celery_beat
+    restart: unless-stopped
+    networks:
+      - ifood_network  # ← ADICIONAR
+
+volumes:
+  redis_data:
+  persistent_data:
+  beat_data:
+
+networks:
+  ifood_network:  # ← ADICIONAR ESTA SEÇÃO INTEIRA
+    driver: bridge
+    name: ifood_network

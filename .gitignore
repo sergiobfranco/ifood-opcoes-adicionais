@@ -1,0 +1,48 @@
+# Variáveis de ambiente
+.env
+
+# Arquivos Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Ambientes virtuais
+venv/
+env/
+ENV/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Dados
+data/api/*.xlsx
+data/partials/*.xlsx
+data/output/*.xlsx
+
+# Ignorar arquivos de lookup (exceto .gitkeep)
+config/lookups/**/*.xlsx
+config/lookups/**/*.xls
+!config/lookups/**/.gitkeep
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Credenciais Google
+config/google_drive_credentials.json
+config/*credentials*.json
+# Credenciais sensíveis
+config/google_drive_credentials.json*
+config/*.json
+*.json.disabled
