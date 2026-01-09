@@ -18,7 +18,8 @@ from src import (
     batch_final_adjustment,
     unregistered_spokesperson_finder,  # ← ADICIONE ESTA LINHA
     delivery_establishments_identifier,  # ← ADICIONE
-    batch_update_creator  # ← ADICIONE
+    batch_update_creator,  # ← ADICIONE
+    postprocess_spokesperson_ids  # ← PÓS-PROCESSAMENTO
 )
 
 logger = logging.getLogger(__name__)
@@ -48,7 +49,7 @@ def _execute_pipeline(task_instance, uploaded_files: dict):
             }
         )
     
-    total_steps = 15
+    total_steps = 16
 
     # Etapa 1: Setup
     settings.create_folder_structure()
@@ -158,6 +159,31 @@ def _execute_pipeline(task_instance, uploaded_files: dict):
         # Etapa 15: Adequação final
         update_progress(15, total_steps, "Finalizando...")
         df_final = batch_final_adjustment.process_final_batch(df_lote, final_df)
+
+        # Etapa 16: Pós-processamento (preenchimento de IDs de porta-vozes)
+        update_progress(16, total_steps, "Preenchendo IDs de porta-vozes...")
+        try:
+            # Processar arquivo principal
+            postprocess_spokesperson_ids.process_file(
+                input_path=settings.arq_lote_final_limpo,
+                lookup_path=Path(uploaded_files['porta_vozes']),
+                inplace=True
+            )
+            
+            # Processar arquivo com timestamp também
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamped_file = settings.PASTA_OUTPUT / f"Tabela_atualizacao_em_lote_limpo_{timestamp}.xlsx"
+            if timestamped_file.exists():
+                postprocess_spokesperson_ids.process_file(
+                    input_path=timestamped_file,
+                    lookup_path=Path(uploaded_files['porta_vozes']),
+                    inplace=True
+                )
+            
+            logger.info("Pós-processamento de IDs de porta-vozes concluído")
+        except Exception as e:
+            logger.warning(f"Pós-processamento de IDs falhou: {e}")
+            # não falhar o pipeline inteiro se pós-processamento falhar
 
         result = {
             'status': 'SUCCESS',

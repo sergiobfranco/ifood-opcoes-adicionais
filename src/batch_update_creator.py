@@ -78,6 +78,7 @@ def pivot_columns_by_brand(
     """
     Pivoteia colunas especificadas por marca.
     Cria colunas no formato {Marca}_{ColunaNome}.
+    Preserva colunas não-pivotadas (comuns a todos os registros do grupo).
     """
     logger.info("Pivoteando colunas por marca...")
     
@@ -90,12 +91,22 @@ def pivot_columns_by_brand(
     colunas_para_processar = df.columns[start_idx:end_idx].tolist()
     logger.info(f"Colunas a processar: {colunas_para_processar}")
     
+    # Colunas que não serão pivotadas (preservadas como estão)
+    colunas_comuns = df.columns[:start_idx].tolist()
+    logger.info(f"Colunas comuns a preservar: {colunas_comuns}")
+    
     # Agrupar por Id
     grouped = df.groupby('Id')
     registros_consolidados = []
     
     for id_valor, group_df in grouped:
         novo_registro = {'Id': id_valor}
+        
+        # Copiar valores das colunas comuns (do primeiro registro do grupo)
+        primeiro_registro = group_df.iloc[0]
+        for col_comum in colunas_comuns:
+            if col_comum in primeiro_registro:
+                novo_registro[col_comum] = primeiro_registro[col_comum]
         
         for _, row in group_df.iterrows():
             marca = row.get('Marca')

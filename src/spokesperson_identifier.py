@@ -132,7 +132,7 @@ def identify_spokespersons(
                 'ID_Porta_Voz': None
             })
     
-    df_result = pd.DataFrame(records).drop_duplicates(subset=['Id'], keep='first')
+    df_result = pd.DataFrame(records).drop_duplicates(subset=['Id', 'Marca', 'Porta_Voz'], keep='first')
     logger.info(f"Identificação concluída: {len(df_result)} registros")
     
     df_result.to_excel(output_file, index=False)

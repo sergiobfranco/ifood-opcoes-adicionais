@@ -1,0 +1,13 @@
+row,col,name,match,score,type
+25,Porta-vozes iFood,Lucas Pittio,lucas pittioni,0.9230769230769231,ambiguous
+25,Porta-vozes iFood,i,,,not_found
+28,Porta-vozes iFood,a Paula Duarte,ana paula duarte,0.9333333333333333,ambiguous
+28,Porta-vozes iFood,A,,,not_found
+0,Porta Vozes Keeta,To,,,not_found
+0,Porta Vozes Keeta,y Qiu,,,not_found
+3,Porta Vozes 99,Pedro Aqui,pedro aquino,0.9090909090909091,ambiguous
+3,Porta Vozes 99,o,,,not_found
+8,Porta Vozes 99,Pedro Aqui,pedro aquino,0.9090909090909091,ambiguous
+8,Porta Vozes 99,o,,,not_found
+9,Porta Vozes 99,Pedro Aqui,pedro aquino,0.9090909090909091,ambiguous
+9,Porta Vozes 99,o,,,not_found

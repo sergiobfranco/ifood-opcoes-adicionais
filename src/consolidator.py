@@ -35,6 +35,10 @@ def initialize_consolidated_df(df_news: pd.DataFrame) -> pd.DataFrame:
         if col not in df_consolidated.columns:
             df_consolidated[col] = None
     
+    # CORREÇÃO: Adicionar coluna ID_pv_cadastrados explicitamente
+    if 'ID_pv_cadastrados' not in df_consolidated.columns:
+        df_consolidated['ID_pv_cadastrados'] = None
+    
     logger.info(f"DataFrame consolidado inicializado: {len(df_consolidated)} registros")
     return df_consolidated
 
@@ -67,6 +71,7 @@ def consolidate_spokespersons(
         noticia_id = row['Id']
         marca = row['Marca']
         porta_voz = row['Porta_Voz']
+        porta_voz_id = row.get('ID_Porta_Voz')  # Capturar o ID do porta-voz
         
         match = df_consolidated[df_consolidated['Id'] == noticia_id]
         
@@ -74,6 +79,7 @@ def consolidate_spokespersons(
             record = match.iloc[0].copy()
             record['Marca'] = marca
             record['pv_cadastrados'] = porta_voz
+            record['ID_pv_cadastrados'] = porta_voz_id  # Adicionar ID do porta-voz
             duplicates.append(record)
             duplicated_ids.add(noticia_id)
         else:
