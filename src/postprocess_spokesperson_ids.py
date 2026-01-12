@@ -143,7 +143,7 @@ def process_file(input_path: Path, lookup_path: Path, inplace: bool = False):
         output_path = input_path.with_name(f"{input_path.stem}_with_ids_{timestamp}{input_path.suffix}")
 
     if output_path.suffix.lower() in ['.xlsx', '.xls']:
-        df.to_excel(output_path, index=False)
+        save_with_hyperlinks(df, output_path)
     elif output_path.suffix.lower() == '.csv':
         df.to_csv(output_path, index=False)
     else:
@@ -160,6 +160,29 @@ def process_file(input_path: Path, lookup_path: Path, inplace: bool = False):
 
     logger.info(f"Arquivo atualizado salvo: {output_path}")
     return output_path
+
+
+def save_with_hyperlinks(df: pd.DataFrame, output_path: Path) -> None:
+    """Salva Excel com hyperlinks."""
+    import xlsxwriter
+    
+    with pd.ExcelWriter(output_path, engine='xlsxwriter') as writer:
+        df.to_excel(writer, sheet_name='Sheet1', index=False)
+        
+        workbook = writer.book
+        worksheet = writer.sheets['Sheet1']
+        
+        hyperlink_format = workbook.add_format({'font_color': 'blue', 'underline': 1})
+        
+        if 'UrlVisualizacao' in df.columns:
+            url_col_index = df.columns.get_loc('UrlVisualizacao')
+            
+            for row_num in range(1, len(df) + 1):
+                url_value = df.iloc[row_num - 1, url_col_index]
+                if pd.notna(url_value) and isinstance(url_value, str):
+                    worksheet.write_url(row_num, url_col_index, url_value, hyperlink_format, 'Abrir URL')
+    
+    logger.info(f"Arquivo salvo com hyperlinks: {output_path}")
 
 
 def main():
