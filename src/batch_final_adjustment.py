@@ -256,29 +256,59 @@ def lookup_protagonist_ids(df: pd.DataFrame) -> pd.DataFrame:
     if df_lookup.empty:
         return df
     
-    # Criar dicionário de lookup: Resposta -> ID Resposta
+    # Criar dicionário de lookup: (Marca, Resposta) -> ID Resposta
+    # Extrai a marca do campo 'Coluna/Opção Adicional'
     lookup_dict = {}
     for _, row in df_lookup.iterrows():
+        coluna_marca = str(row['Coluna/Opção Adicional']).strip()
         resposta = str(row['Resposta']).strip()
         id_resposta = row['ID Resposta']
-        lookup_dict[resposta] = id_resposta
+        
+        # Normalizar o nome da coluna para extrair a marca
+        # Formato: "Nivel de Protagonismo <marca>" ou "Nível de Protagonismo <marca>"
+        marca = None
+        if 'Nivel de Protagonismo 99' in coluna_marca or 'Nível de Protagonismo 99' in coluna_marca:
+            marca = '99'
+        elif 'Nivel de Protagonismo DoorDash' in coluna_marca or 'Nível de Protagonismo DoorDash' in coluna_marca:
+            marca = 'DoorDash'
+        elif 'Nivel de Protagonismo iFood' in coluna_marca or 'Nível de Protagonismo iFood' in coluna_marca:
+            marca = 'iFood'
+        elif 'Nivel de Protagonismo Keeta' in coluna_marca or 'Nível de Protagonismo Keeta' in coluna_marca:
+            marca = 'Keeta'
+        elif 'Nivel de Protagonismo Meituan' in coluna_marca or 'Nível de Protagonismo Meituan' in coluna_marca:
+            marca = 'Meituan'
+        elif 'Nivel de Protagonismo Rappi' in coluna_marca or 'Nível de Protagonismo Rappi' in coluna_marca:
+            marca = 'Rappi'
+        
+        if marca:
+            lookup_dict[(marca, resposta)] = id_resposta
     
-    # Colunas de protagonismo a processar
-    protagonist_columns = [
-        'Nível de Protagonismo iFood', 'Nivel de Protagonismo Rappi',
-        'Nivel de Protagonismo DoorDash', 'Nivel de Protagonismo Meituan',
-        'Nivel de Protagonismo Keeta', 'Nivel de Protagonismo 99'
-    ]
+    # Colunas de protagonismo a processar com suas respectivas marcas
+    protagonist_columns = {
+        'Nível de Protagonismo iFood': 'iFood',
+        'Nivel de Protagonismo iFood': 'iFood',
+        'Nivel de Protagonismo Rappi': 'Rappi',
+        'Nível de Protagonismo Rappi': 'Rappi',
+        'Nivel de Protagonismo DoorDash': 'DoorDash',
+        'Nível de Protagonismo DoorDash': 'DoorDash',
+        'Nivel de Protagonismo Meituan': 'Meituan',
+        'Nível de Protagonismo Meituan': 'Meituan',
+        'Nivel de Protagonismo Keeta': 'Keeta',
+        'Nível de Protagonismo Keeta': 'Keeta',
+        'Nivel de Protagonismo 99': '99',
+        'Nível de Protagonismo 99': '99'
+    }
     
     updated_count = 0
-    for col in protagonist_columns:
+    for col, marca in protagonist_columns.items():
         if col in df.columns:
             id_col = f"ID {col}"
             if id_col in df.columns:
                 for idx, valor in df[col].items():
                     if pd.notna(valor) and str(valor).strip():
                         valor_str = str(valor).strip()
-                        id_valor = lookup_dict.get(valor_str)
+                        # Fazer lookup com (marca, resposta)
+                        id_valor = lookup_dict.get((marca, valor_str))
                         if id_valor is not None:
                             df.at[idx, id_col] = id_valor
                             updated_count += 1
